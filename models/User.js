@@ -51,10 +51,10 @@ class User {
     return rows[0];
   }
 
-  static async update(userId, { username, email, password }) {
+  static async update(userId, { firstName, lastName, username, email, password }) {
     await db.execute(
-      "UPDATE users SET username = ?, email = ?, password = ? WHERE user_id = ?",
-      [username, email, password, userId]
+      "UPDATE users SET first_name = ?, last_name = ?, username = ?, email = ?, password = ? WHERE user_id = ?",
+      [firstName, lastName, username, email, password, userId]
     );
   }
 

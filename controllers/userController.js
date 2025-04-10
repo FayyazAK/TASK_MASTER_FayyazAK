@@ -1,22 +1,18 @@
 const User = require('../models/User');
 const { validateEmail, validatePassword, hashPassword } = require('../utils/utils');
 
-// Response helpers
-const successResponse = (res, data, statusCode = 200) => {
-  res.status(statusCode).json({ status: "success", data });
-};
-
-const errorResponse = (res, message, statusCode = 400) => {
-  res.status(statusCode).json({ status: "error", message });
-};
-
 // Get all users
 const getAllUsers = async (req, res) => {
   try {
     const users = await User.find();
-    successResponse(res, users);
+    // Remove sensitive data from each user
+    const sanitizedUsers = users.map(user => {
+      const { password, ...sanitizedUser } = user;
+      return sanitizedUser;
+    });
+    res.success(sanitizedUsers);
   } catch (error) {
-    errorResponse(res, error.message, 500);
+    res.error(error.message, 500);
   }
 };
 
@@ -25,16 +21,18 @@ const getUserById = async (req, res) => {
   try {
     const userId = req.params.id;
     if (!userId) {
-      return errorResponse(res, 'User ID is required');
+      return res.error('User ID is required');
     }
 
     const user = await User.findById(userId);
     if (!user) {
-      return errorResponse(res, 'User not found', 404);
+      return res.error('User not found', 404);
     }
-    successResponse(res, user);
+    // Remove sensitive data
+    const { password, ...sanitizedUser } = user;
+    res.success(sanitizedUser);
   } catch (error) {
-    errorResponse(res, error.message, 500);
+    res.error(error.message, 500);
   }
 };
 
@@ -45,29 +43,29 @@ const createUser = async (req, res) => {
 
     // Validate required fields
     if (!firstName || !username || !email || !password) {
-      return errorResponse(res, 'First name, username, email and password are required');
+      return res.error('First name, username, email and password are required');
     }
 
     // Validate email format
     if (!validateEmail(email)) {
-      return errorResponse(res, 'Invalid email format');
+      return res.error('Invalid email format');
     }
 
     // Validate password strength
     if (!validatePassword(password)) {
-      return errorResponse(res, 'Password must be at least 8 characters long');
+      return res.error('Password must be at least 8 characters long');
     }
 
     // Check for existing username
     const existingUsername = await User.findByUsername(username.toLowerCase());
     if (existingUsername) {
-      return errorResponse(res, 'Username is already taken');
+      return res.error('Username is already taken');
     }
 
     // Check for existing email
     const existingEmail = await User.findByEmail(email.toLowerCase());
     if (existingEmail) {
-      return errorResponse(res, 'Email is already registered');
+      return res.error('Email is already registered');
     }
 
     // Create new user
@@ -81,9 +79,11 @@ const createUser = async (req, res) => {
     });
 
     const newUser = await User.findById(userId);
-    successResponse(res, newUser, 201);
+    // Remove sensitive data
+    const { password: userPassword, ...sanitizedUser } = newUser;
+    res.success(sanitizedUser, 201);
   } catch (error) {
-    errorResponse(res, error.message);
+    res.error(error.message);
   }
 };
 
@@ -94,30 +94,30 @@ const updateUser = async (req, res) => {
     const { firstName, lastName, username, email, password } = req.body;
 
     if (!userId) {
-      return errorResponse(res, 'User ID is required');
+      return res.error('User ID is required');
     }
 
     // Check if user exists
     const existingUser = await User.findById(userId);
     if (!existingUser) {
-      return errorResponse(res, 'User not found', 404);
+      return res.error('User not found', 404);
     }
 
     // Validate email if provided
     if (email && !validateEmail(email)) {
-      return errorResponse(res, 'Invalid email format');
+      return res.error('Invalid email format');
     }
 
     // Validate password if provided
     if (password && !validatePassword(password)) {
-      return errorResponse(res, 'Password must be at least 8 characters long');
+      return res.error('Password must be at least 8 characters long');
     }
 
     // Check for duplicate username
     if (username && username.toLowerCase() !== existingUser.username) {
       const existingUsername = await User.findByUsername(username.toLowerCase());
       if (existingUsername) {
-        return errorResponse(res, 'Username is already taken');
+        return res.error('Username is already taken');
       }
     }
 
@@ -125,7 +125,7 @@ const updateUser = async (req, res) => {
     if (email && email.toLowerCase() !== existingUser.email) {
       const existingEmail = await User.findByEmail(email.toLowerCase());
       if (existingEmail) {
-        return errorResponse(res, 'Email is already registered');
+        return res.error('Email is already registered');
       }
     }
 
@@ -141,9 +141,11 @@ const updateUser = async (req, res) => {
     // Update user
     await User.update(userId, updateData);
     const updatedUser = await User.findById(userId);
-    successResponse(res, updatedUser);
+    // Remove sensitive data
+    const { password: userPassword, ...sanitizedUser } = updatedUser;
+    res.success(sanitizedUser);
   } catch (error) {
-    errorResponse(res, error.message);
+    res.error(error.message);
   }
 };
 
@@ -153,19 +155,19 @@ const deleteUser = async (req, res) => {
     const userId = req.params.id;
     
     if (!userId) {
-      return errorResponse(res, 'User ID is required');
+      return res.error('User ID is required');
     }
 
     // Check if user exists
     const existingUser = await User.findById(userId);
     if (!existingUser) {
-      return errorResponse(res, 'User not found', 404);
+      return res.error('User not found', 404);
     }
 
     await User.delete(userId);
-    successResponse(res, { message: 'User deleted successfully' });
+    res.success({ message: 'User deleted successfully' });
   } catch (error) {
-    errorResponse(res, error.message, 500);
+    res.error(error.message, 500);
   }
 };
 
