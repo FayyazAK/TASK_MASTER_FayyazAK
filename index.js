@@ -6,6 +6,8 @@ const userRoutes = require("./routes/userRoutes");
 const responseHandler = require("./middleware/responseHandler");
 const errorHandler = require("./middleware/errorHandler");
 const authRoutes = require("./routes/authRoutes");
+const listRoutes = require("./routes/listRoutes");
+const taskRoutes = require("./routes/taskRoutes");
 const HTTP_STATUS = require("./utils/statusCodes");
 const app = express();
 const PORT = config.PORT;
@@ -17,15 +19,11 @@ app.use(cookieParser());
 
 //Custom Response Handler
 app.use(responseHandler);
-app.use((req, res, next) => {
-  console.log('Cookies received:', req.cookies);
-  console.log('Raw Cookie header:', req.headers.cookie);
-  next();
-});
 // Routes
 app.use("/api/users", userRoutes);
 app.use("/api/auth", authRoutes);
-
+app.use("/api/lists", listRoutes);
+app.use("/api/tasks", taskRoutes);
 
 app.get("/", (req, res) => {
   return res.success({ message: "Hello from server!" });
@@ -33,7 +31,10 @@ app.get("/", (req, res) => {
 
 // 404 page handler
 app.use((req, res) => {
-  return res.error("Not Found - The requested resource does not exist", HTTP_STATUS.NOT_FOUND);
+  return res.error(
+    "Not Found - The requested resource does not exist",
+    HTTP_STATUS.NOT_FOUND
+  );
 });
 
 // Error handler Middleware
