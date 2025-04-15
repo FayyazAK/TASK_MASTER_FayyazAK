@@ -5,6 +5,7 @@ const config = require("./config/env");
 const corsConfig = require("./config/cors");
 const responseHandler = require("./middleware/responseHandler");
 const errorHandler = require("./middleware/errorHandler");
+const rateLimiter = require("./middleware/rateLimiter");
 const HTTP_STATUS = require("./utils/statusCodes");
 const routes = require("./routes");
 
@@ -31,6 +32,8 @@ if (config.SSL.enabled) {
 
 // Custom Response Handler
 app.use(responseHandler);
+// Rate Limiter Middleware (must be after responseHandler)
+app.use(rateLimiter);
 
 // Routes
 app.use("/api", routes);
