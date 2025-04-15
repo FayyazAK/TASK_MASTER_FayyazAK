@@ -1,12 +1,17 @@
 const express = require("express");
 const cookieParser = require("cookie-parser");
+const cors = require("cors");
 const config = require("./config/env");
+const corsConfig = require("./config/cors");
 const responseHandler = require("./middleware/responseHandler");
 const errorHandler = require("./middleware/errorHandler");
 const HTTP_STATUS = require("./utils/statusCodes");
 const routes = require("./routes");
 
 const app = express();
+
+// CORS Configuration
+app.use(cors(corsConfig));
 
 // Middleware
 app.use(express.json());
