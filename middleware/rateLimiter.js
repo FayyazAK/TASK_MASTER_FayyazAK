@@ -1,6 +1,6 @@
 const rateLimit = require("express-rate-limit");
 const HTTP_STATUS = require("../utils/statusCodes");
-
+const logger = require("../utils/logger");
 // Rate limiter configuration
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
@@ -9,6 +9,11 @@ const limiter = rateLimit({
   legacyHeaders: true, // Enable/Disable the `X-RateLimit-*` headers
   // Custom handler for when limit is exceeded
   handler: (req, res) => {
+    logger.error(
+      `Too many requests from this IP, please try again after ${Math.ceil(
+        res.getHeader("Retry-After") / 60
+      )} minutes.`
+    );
     return res.error(
       `Too many requests from this IP, please try again after ${Math.ceil(
         res.getHeader("Retry-After") / 60
