@@ -33,4 +33,12 @@ module.exports = {
   TASK_TITLE_MIN_LENGTH: 3,
   TASK_TITLE_MAX_LENGTH: 150,
   TASK_DESCRIPTION_MAX_LENGTH: 500,
+
+  //SSL CONFIG
+  SSL: {
+    enabled: process.env.SSL_ENABLED === "true",
+    key: process.env.SSL_KEY_PATH || "../ssl/key.pem",
+    cert: process.env.SSL_CERT_PATH || "../ssl/cert.pem",
+    port: process.env.SSL_PORT || 443,
+  },
 };
