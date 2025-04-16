@@ -1,12 +1,23 @@
 const express = require("express");
 const cookieParser = require("cookie-parser");
+const cors = require("cors");
+const morgan = require("morgan");
 const config = require("./config/env");
+const corsConfig = require("./config/cors");
 const responseHandler = require("./middleware/responseHandler");
 const errorHandler = require("./middleware/errorHandler");
+const rateLimiter = require("./middleware/rateLimiter");
 const HTTP_STATUS = require("./utils/statusCodes");
 const routes = require("./routes");
+const logger = require("./utils/logger");
 
 const app = express();
+
+// CORS Configuration
+app.use(cors(corsConfig));
+
+// Logging middleware
+app.use(morgan("combined", { stream: logger.stream }));
 
 // Middleware
 app.use(express.json());
@@ -18,6 +29,7 @@ if (config.SSL.enabled) {
   app.use((req, res, next) => {
     if (!req.secure) {
       const httpsUrl = `https://${req.headers.host}${req.url}`;
+      logger.info(`Redirecting to HTTPS: ${httpsUrl}`);
       return res.redirect(301, httpsUrl);
     }
     next();
@@ -26,16 +38,20 @@ if (config.SSL.enabled) {
 
 // Custom Response Handler
 app.use(responseHandler);
+// Rate Limiter Middleware (must be after responseHandler)
+app.use(rateLimiter);
 
 // Routes
 app.use("/api", routes);
 
 app.get("/", (req, res) => {
+  logger.info("Root endpoint accessed");
   return res.success({ message: "Hello from server!" });
 });
 
 // 404 page handler
 app.use((req, res) => {
+  logger.warn(`404 Not Found: ${req.method} ${req.url}`);
   return res.error(
     "Not Found - The requested resource does not exist",
     HTTP_STATUS.NOT_FOUND
@@ -43,6 +59,14 @@ app.use((req, res) => {
 });
 
 // Error handler Middleware
-app.use(errorHandler);
+app.use((err, req, res, next) => {
+  logger.error("Unhandled error:", {
+    error: err.message,
+    stack: err.stack,
+    path: req.path,
+    method: req.method,
+  });
+  errorHandler(err, req, res, next);
+});
 
 module.exports = app;
