@@ -1,11 +1,28 @@
 require("dotenv").config();
-
+// Make sure to add the .env file to the root of the project
+// and add the variables to the .env file
+// this file is used to get the variables from the .env file
+// fix type errors, fallback to default values, etc.
+// and use them in the project
 module.exports = {
   // NODE ENV
   NODE_ENV: process.env.NODE_ENV || "development",
 
   // SERVER CONFIG
   PORT: process.env.PORT || 8000,
+
+  // CORS CONFIG
+  CORS: {
+    ALLOWED_ORIGINS: process.env.CORS_ALLOWED_ORIGINS
+      ? process.env.CORS_ALLOWED_ORIGINS.split(",")
+      : ["http://localhost:3000"],
+    ALLOWED_METHODS: process.env.CORS_ALLOWED_METHODS
+      ? process.env.CORS_ALLOWED_METHODS.split(",")
+      : ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    ALLOWED_HEADERS: process.env.CORS_ALLOWED_HEADERS
+      ? process.env.CORS_ALLOWED_HEADERS.split(",")
+      : ["Content-Type", "Authorization"],
+  },
 
   // JWT CONFIG
   JWT_SECRET: process.env.JWT_SECRET || "todo-list@fayyaz-ak",

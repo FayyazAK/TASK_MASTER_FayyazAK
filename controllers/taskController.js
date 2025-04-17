@@ -132,24 +132,15 @@ const getAllTasks = async (req, res, next) => {
 const deleteTask = async (req, res, next) => {
   try {
     const { task_id } = req.params;
-    const { list_id } = req.body;
 
     // Validate IDs
     const parsedTaskId = parseInt(task_id);
-    const parsedListId = parseInt(list_id);
 
-    if (isNaN(parsedTaskId) || isNaN(parsedListId)) {
-      return res.error(
-        "Valid task ID and list ID are required",
-        HTTP_STATUS.BAD_REQUEST
-      );
+    if (isNaN(parsedTaskId)) {
+      return res.error("Valid task ID is required", HTTP_STATUS.BAD_REQUEST);
     }
 
-    const deleted = await Task.deleteTask(
-      parsedTaskId,
-      parsedListId,
-      req.user.user_id
-    );
+    const deleted = await Task.deleteTask(parsedTaskId, req.user.user_id);
 
     if (!deleted) {
       return res.error("Task not found", HTTP_STATUS.NOT_FOUND);
@@ -165,17 +156,13 @@ const deleteTask = async (req, res, next) => {
 const updateTaskStatus = async (req, res, next) => {
   try {
     const { task_id } = req.params;
-    const { list_id, is_completed } = req.body;
+    const { is_completed } = req.body;
 
     // Validate parameters
     const parsedTaskId = parseInt(task_id);
-    const parsedListId = parseInt(list_id);
 
-    if (isNaN(parsedTaskId) || isNaN(parsedListId)) {
-      return res.error(
-        "Valid task ID and list ID are required",
-        HTTP_STATUS.BAD_REQUEST
-      );
+    if (isNaN(parsedTaskId)) {
+      return res.error("Valid task ID is required", HTTP_STATUS.BAD_REQUEST);
     }
 
     // Validate is_completed
@@ -193,7 +180,6 @@ const updateTaskStatus = async (req, res, next) => {
 
     const updated = await Task.updateTaskStatus(
       parsedTaskId,
-      parsedListId,
       isCompletedBoolean,
       req.user.user_id
     );
@@ -202,14 +188,9 @@ const updateTaskStatus = async (req, res, next) => {
       return res.error("Task not found", HTTP_STATUS.NOT_FOUND);
     }
 
-    return res.success(
-      {
-        task_id: parsedTaskId,
-        list_id: parsedListId,
-        is_completed: isCompletedBoolean,
-      },
-      HTTP_STATUS.OK
-    );
+    const task = await Task.getTaskById(parsedTaskId, req.user.user_id);
+
+    return res.success(task, HTTP_STATUS.OK);
   } catch (error) {
     console.error("Error in updateTaskStatus:", error.message);
     return next(error);
@@ -219,14 +200,18 @@ const updateTaskStatus = async (req, res, next) => {
 const updateTask = async (req, res, next) => {
   try {
     const { task_id } = req.params;
+
+    if (!req.body) {
+      return res.error("Invalid Request", HTTP_STATUS.BAD_REQUEST);
+    }
+
     const { list_id, title, description, priority_id, due_date, is_completed } =
       req.body;
 
     // Validate IDs
     const parsedTaskId = parseInt(task_id);
-    const parsedListId = parseInt(list_id);
 
-    if (isNaN(parsedTaskId) || isNaN(parsedListId)) {
+    if (isNaN(parsedTaskId)) {
       return res.error(
         "Valid task ID and list ID are required",
         HTTP_STATUS.BAD_REQUEST
@@ -242,6 +227,13 @@ const updateTask = async (req, res, next) => {
     }
 
     // Validate fields if provided
+    let parsedListId;
+    if (list_id !== undefined) {
+      parsedListId = parseInt(list_id);
+      if (isNaN(parsedListId)) {
+        return res.error("Invalid List ID", HTTP_STATUS.BAD_REQUEST);
+      }
+    }
     if (title !== undefined) {
       const titleError = validateTitle(title);
       if (titleError) {
@@ -278,11 +270,7 @@ const updateTask = async (req, res, next) => {
     }
 
     // Get existing task
-    const existingTask = await Task.getTaskById(
-      parsedTaskId,
-      parsedListId,
-      req.user.user_id
-    );
+    const existingTask = await Task.getTaskById(parsedTaskId, req.user.user_id);
     if (!existingTask) {
       return res.error("Task not found", HTTP_STATUS.NOT_FOUND);
     }
@@ -290,6 +278,7 @@ const updateTask = async (req, res, next) => {
     // Prepare update data - only include fields that were provided in the request
     const updateData = {};
 
+    if (list_id !== undefined) updateData.list_id = parsedListId;
     if (title !== undefined) updateData.title = title;
     if (description !== undefined) updateData.description = description;
     if (priority_id !== undefined)
@@ -302,7 +291,6 @@ const updateTask = async (req, res, next) => {
     // Update the task
     const updated = await Task.updateTask(
       parsedTaskId,
-      parsedListId,
       updateData,
       req.user.user_id
     );
@@ -314,15 +302,55 @@ const updateTask = async (req, res, next) => {
       );
     }
 
-    // Get the updated task
-    const updatedTask = await Task.getTaskById(
-      parsedTaskId,
-      parsedListId,
-      req.user.user_id
-    );
-    return res.success(updatedTask, HTTP_STATUS.OK);
+    const updatedTask = await Task.getTaskById(parsedTaskId, req.user.user_id);
+
+    if (!updatedTask) {
+      return res.error("Task not found", HTTP_STATUS.NOT_FOUND);
+    }
+    const listId = parsedListId || existingTask.list_id;
+    console.log("listId", listId);
+    const isUpdated = await List.updateListTimestamp(listId, req.user.user_id);
+    if (!isUpdated) {
+      return res.error(
+        "Failed to update list timestamp",
+        HTTP_STATUS.INTERNAL_SERVER_ERROR
+      );
+    }
+    const task = await Task.getTaskById(parsedTaskId, listId, req.user.user_id);
+
+    return res.success(task, HTTP_STATUS.OK);
   } catch (error) {
     console.error("Error in updateTask:", error.message);
+    return next(error);
+  }
+};
+
+const getPendingTasks = async (req, res, next) => {
+  try {
+    const tasks = await Task.getPendingTasks(req.user.user_id);
+    return res.success(tasks, HTTP_STATUS.OK);
+  } catch (error) {
+    console.error("Error in getPendingTasks:", error);
+    return next(error);
+  }
+};
+
+const getTasksDueToday = async (req, res, next) => {
+  try {
+    const tasks = await Task.getTasksDueToday(req.user.user_id);
+    return res.success(tasks, HTTP_STATUS.OK);
+  } catch (error) {
+    console.error("Error in getTasksDueToday:", error);
+    return next(error);
+  }
+};
+
+const getOverdueTasks = async (req, res, next) => {
+  try {
+    const tasks = await Task.getOverdueTasks(req.user.user_id);
+    return res.success(tasks, HTTP_STATUS.OK);
+  } catch (error) {
+    console.error("Error in getOverdueTasks:", error);
     return next(error);
   }
 };
@@ -334,4 +362,7 @@ module.exports = {
   deleteTask,
   updateTaskStatus,
   updateTask,
+  getPendingTasks,
+  getOverdueTasks,
+  getTasksDueToday,
 };

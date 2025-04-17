@@ -40,12 +40,17 @@ class Task {
     }
   }
 
-  static async updateTask(task_id, list_id, updateData, user_id) {
+  static async updateTask(task_id, updateData, user_id) {
     try {
       const setFields = [];
       const values = [];
 
       // Add fields that were provided in updateData
+      if (updateData.list_id !== undefined) {
+        setFields.push("list_id = ?");
+        values.push(updateData.list_id);
+      }
+
       if (updateData.title !== undefined) {
         setFields.push("title = ?");
         values.push(updateData.title);
@@ -78,23 +83,17 @@ class Task {
 
       // Build the query
       const query = `
-        UPDATE tasks 
-        SET ${setFields.join(", ")} 
-        WHERE task_id = ? AND list_id = ? AND list_id IN (
-          SELECT list_id FROM lists WHERE user_id = ?
-        )
-      `;
+      UPDATE tasks t
+      JOIN lists l ON t.list_id = l.list_id
+      SET ${setFields.map((field) => `t.${field}`).join(", ")}
+      WHERE t.task_id = ? AND l.user_id = ?
+    `;
 
       // WHERE clause parameters
-      values.push(task_id, list_id, user_id);
+      values.push(task_id, user_id);
 
       // Execute the query
       const [result] = await db.execute(query, values);
-
-      // Update the list's timestamp
-      if (result.affectedRows > 0) {
-        await db.execute(TASK.UPDATE_LIST_TIMESTAMP, [list_id, user_id]);
-      }
 
       return result.affectedRows > 0;
     } catch (error) {
@@ -116,11 +115,10 @@ class Task {
     }
   }
 
-  static async getTaskById(task_id, list_id, user_id) {
+  static async getTaskById(task_id, user_id) {
     try {
       const [results] = await db.execute(TASK.GET_TASK_BY_ID, [
         task_id,
-        list_id,
         user_id,
       ]);
       return results.length > 0 ? results[0] : null;
@@ -140,13 +138,9 @@ class Task {
     }
   }
 
-  static async deleteTask(task_id, list_id, user_id) {
+  static async deleteTask(task_id, user_id) {
     try {
-      const [result] = await db.execute(TASK.DELETE_TASK, [
-        task_id,
-        list_id,
-        user_id,
-      ]);
+      const [result] = await db.execute(TASK.DELETE_TASK, [task_id, user_id]);
       return result.affectedRows > 0;
     } catch (error) {
       console.error("Error deleting task: ", error);
@@ -154,17 +148,46 @@ class Task {
     }
   }
 
-  static async updateTaskStatus(task_id, list_id, is_completed, user_id) {
+  static async updateTaskStatus(task_id, is_completed, user_id) {
     try {
       const [result] = await db.execute(TASK.UPDATE_TASK_STATUS, [
         is_completed ? 1 : 0, // Convert boolean to 1/0
         task_id,
-        list_id,
         user_id,
       ]);
       return result.affectedRows > 0;
     } catch (error) {
       console.error("Error updating task status: ", error);
+      throw error;
+    }
+  }
+
+  static async getPendingTasks(user_id) {
+    try {
+      const [results] = await db.execute(TASK.GET_PENDING_TASKS, [user_id]);
+      return results;
+    } catch (error) {
+      console.error("Error getting pending tasks: ", error);
+      throw error;
+    }
+  }
+
+  static async getTasksDueToday(user_id) {
+    try {
+      const [results] = await db.execute(TASK.GET_TASKS_DUE_TODAY, [user_id]);
+      return results;
+    } catch (error) {
+      console.error("Error getting tasks due today: ", error);
+      throw error;
+    }
+  }
+
+  static async getOverdueTasks(user_id) {
+    try {
+      const [results] = await db.execute(TASK.GET_OVERDUE_TASKS, [user_id]);
+      return results;
+    } catch (error) {
+      console.error("Error getting overdue tasks: ", error);
       throw error;
     }
   }
