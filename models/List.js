@@ -185,6 +185,20 @@ class List {
       throw new Error(`Failed to clean up all lists: ${error.message}`);
     }
   }
+
+  static async updateListTimestamp(list_id, user_id) {
+    try {
+      const [result] = await db.execute(LIST.UPDATE_LIST_TIMESTAMP, [
+        list_id,
+        user_id,
+      ]);
+      console.log("result", result);
+      return result.affectedRows > 0;
+    } catch (error) {
+      console.error("Error updating list timestamp: ", error);
+      throw error;
+    }
+  }
 }
 
 module.exports = List;

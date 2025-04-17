@@ -42,6 +42,18 @@ class Priority {
       throw error;
     }
   }
+
+  static async getPriorityByLevel(level) {
+    try {
+      const [results] = await db.execute(PRIORITY.GET_PRIORITY_BY_LEVEL, [
+        level,
+      ]);
+      return results[0];
+    } catch (error) {
+      console.error("Error getting priority by level:", error);
+      throw error;
+    }
+  }
 }
 
 module.exports = Priority;
