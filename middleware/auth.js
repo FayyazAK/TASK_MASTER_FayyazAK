@@ -7,6 +7,7 @@ const authenticate = (req, res, next) => {
     // Get token from cookies
     const token = req.cookies.token;
     if (!token) {
+      res.clearCookie("token");
       return res.error(MSG.UNAUTHORIZED, STATUS.UNAUTHORIZED);
     }
 
@@ -25,6 +26,7 @@ const authenticate = (req, res, next) => {
 
 const authorizeAdmin = (req, res, next) => {
   if (req.user.role !== "admin") {
+    res.clearCookie("token");
     return res.error(MSG.FORBIDDEN, STATUS.FORBIDDEN);
   }
   next();

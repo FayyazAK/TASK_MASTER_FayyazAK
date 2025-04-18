@@ -80,4 +80,8 @@ module.exports = {
   PRIORITY_DELETED: "Priority deleted successfully",
   INVALID_PRIORITY_ID: "Invalid priority ID",
   INVALID_PRIORITY_LEVEL: "Invalid priority level",
+  PRIORITY_FIELDS_REQUIRED: "Name and level are required",
+  PRIORITY_UPDATE_FIELDS_REQUIRED:
+    "At least one field (name or level) is required",
+  PRIORITY_LEVEL_EXISTS: "Priority level already exists",
 };

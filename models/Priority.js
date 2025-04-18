@@ -54,6 +54,57 @@ class Priority {
       throw error;
     }
   }
+  static async createPriority(name, level) {
+    try {
+      const [result] = await db.execute(PRIORITY.CREATE_PRIORITY, [
+        name,
+        level,
+      ]);
+      return result.insertId;
+    } catch (error) {
+      console.error("Error creating priority:", error);
+      throw error;
+    }
+  }
+
+  static async updatePriority(priority_id, name, level) {
+    try {
+      const [result] = await db.execute(PRIORITY.UPDATE_PRIORITY, [
+        name,
+        level,
+        priority_id,
+      ]);
+      return result.affectedRows > 0;
+    } catch (error) {
+      console.error("Error updating priority:", error);
+      throw error;
+    }
+  }
+
+  static async deletePriority(priority_id) {
+    try {
+      const [result] = await db.execute(PRIORITY.DELETE_PRIORITY, [
+        priority_id,
+      ]);
+      return result.affectedRows > 0;
+    } catch (error) {
+      console.error("Error deleting priority:", error);
+      throw error;
+    }
+  }
+
+  static async checkLevelExists(level, priority_id = 0) {
+    try {
+      const [results] = await db.execute(PRIORITY.CHECK_LEVEL_EXISTS, [
+        level,
+        priority_id,
+      ]);
+      return results[0].count > 0;
+    } catch (error) {
+      console.error("Error checking if level exists:", error);
+      throw error;
+    }
+  }
 }
 
 module.exports = Priority;

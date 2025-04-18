@@ -39,4 +39,29 @@ module.exports = {
     FROM priorities
     WHERE level = ?
   `,
+  // Create a new priority
+  CREATE_PRIORITY: `
+    INSERT INTO priorities (name, level) 
+    VALUES (?, ?)
+  `,
+
+  // Update a priority
+  UPDATE_PRIORITY: `
+    UPDATE priorities 
+    SET name = ?, level = ?
+    WHERE priority_id = ?
+  `,
+
+  // Delete a priority
+  DELETE_PRIORITY: `
+    DELETE FROM priorities
+    WHERE priority_id = ?
+  `,
+
+  // Check if level exists
+  CHECK_LEVEL_EXISTS: `
+    SELECT COUNT(*) as count
+    FROM priorities
+    WHERE level = ? AND priority_id != ?
+  `,
 };
