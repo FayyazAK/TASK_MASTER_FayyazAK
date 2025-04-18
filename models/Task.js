@@ -138,6 +138,19 @@ class Task {
     }
   }
 
+  static async getAllTasksWithStatus(user_id, is_completed) {
+    try {
+      const [results] = await db.execute(TASK.GET_ALL_TASKS_WITH_STATUS, [
+        user_id,
+        is_completed,
+      ]);
+      return results;
+    } catch (error) {
+      console.error("Error getting all tasks: ", error);
+      throw error;
+    }
+  }
+
   static async deleteTask(task_id, user_id) {
     try {
       const [result] = await db.execute(TASK.DELETE_TASK, [task_id, user_id]);

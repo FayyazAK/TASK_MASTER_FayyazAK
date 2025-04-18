@@ -1,19 +1,18 @@
 const rateLimit = require("express-rate-limit");
-const HTTP_STATUS = require("../utils/statusCodes");
-
+const STATUS = require("../utils/statusCodes");
+const config = require("../config/env");
 // Rate limiter configuration
 const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 10, // limit each IP to 10 requests per windowMs
-  standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
-  legacyHeaders: true, // Enable/Disable the `X-RateLimit-*` headers
-  // Custom handler for when limit is exceeded
+  windowMs: config.RATE_LIMIT.WINDOW_MS,
+  max: config.RATE_LIMIT.MAX,
+  standardHeaders: true,
+  legacyHeaders: true,
   handler: (req, res) => {
     return res.error(
       `Too many requests from this IP, please try again after ${Math.ceil(
         res.getHeader("Retry-After") / 60
       )} minutes.`,
-      HTTP_STATUS.TOO_MANY_REQUESTS
+      STATUS.TOO_MANY_REQUESTS
     );
   },
 });

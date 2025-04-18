@@ -1,12 +1,13 @@
-const HTTP_STATUS = require("../utils/statusCodes");
+const STATUS = require("../utils/statusCodes");
 const { verifyToken } = require("../services/jwtService");
+const MSG = require("../utils/messages");
 
 const authenticate = (req, res, next) => {
   try {
     // Get token from cookies
     const token = req.cookies.token;
     if (!token) {
-      return res.error("Unauthenticated", HTTP_STATUS.UNAUTHORIZED);
+      return res.error(MSG.UNAUTHORIZED, STATUS.UNAUTHORIZED);
     }
 
     // Verify token
@@ -16,15 +17,15 @@ const authenticate = (req, res, next) => {
     next();
   } catch (error) {
     if (error.name === "TokenExpiredError") {
-      return res.error("Unauthenticated", HTTP_STATUS.UNAUTHORIZED);
+      return res.error(MSG.UNAUTHORIZED, STATUS.UNAUTHORIZED);
     }
-    return res.error("Unauthenticated", HTTP_STATUS.UNAUTHORIZED);
+    return res.error(MSG.UNAUTHORIZED, STATUS.UNAUTHORIZED);
   }
 };
 
 const authorizeAdmin = (req, res, next) => {
   if (req.user.role !== "admin") {
-    return res.error("Unauthorized", HTTP_STATUS.FORBIDDEN);
+    return res.error(MSG.FORBIDDEN, STATUS.FORBIDDEN);
   }
   next();
 };

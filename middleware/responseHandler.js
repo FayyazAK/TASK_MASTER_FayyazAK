@@ -1,13 +1,13 @@
-const HTTP_STATUS = require("../utils/statusCodes");
+const STATUS = require("../utils/statusCodes");
 
 const responseHandler = (req, res, next) => {
   // Success response handler
-  res.success = (data, statusCode = HTTP_STATUS.OK) => {
-    res.status(statusCode).json({ success: true, data });
+  res.success = (data = null, message, statusCode = STATUS.OK) => {
+    res.status(statusCode).json({ success: true, message, data });
   };
 
   // Error response handler
-  res.error = (message, statusCode = HTTP_STATUS.BAD_REQUEST) => {
+  res.error = (message, statusCode = STATUS.BAD_REQUEST) => {
     res.status(statusCode).json({ success: false, message });
   };
 

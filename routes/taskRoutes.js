@@ -7,20 +7,16 @@ const {
   deleteTask,
   updateTaskStatus,
   updateTask,
-  getOverdueTasks,
-  getPendingTasks,
-  getTasksDueToday,
 } = require("../controllers/taskController");
-const { authenticate } = require("../middleware/auth");
 
-router.post("/", authenticate, createTask);
-router.get("/", authenticate, getAllTasks);
-router.get("/:task_id", authenticate, getTaskById);
-router.delete("/:task_id", authenticate, deleteTask);
-router.put("/:task_id", authenticate, updateTask);
-router.put("/:task_id/status", authenticate, updateTaskStatus);
-router.get("/status/pending", getPendingTasks);
-router.get("/due/today", getTasksDueToday);
-router.get("/due/overdue", getOverdueTasks);
+// Specific routes first
+router.get("/:task_id", getTaskById);
+router.delete("/:task_id", deleteTask);
+router.put("/:task_id", updateTask);
+router.put("/:task_id/status", updateTaskStatus);
+
+// Generic routes last
+router.post("/", createTask);
+router.get("/", getAllTasks);
 
 module.exports = router;

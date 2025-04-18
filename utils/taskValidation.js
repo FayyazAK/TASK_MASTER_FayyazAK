@@ -1,16 +1,19 @@
-const HTTP_STATUS = require("./statusCodes");
+const STATUS = require("./statusCodes");
 const Priority = require("../models/Priority");
 const config = require("../config/env");
-
+const MSG = require("./messages");
 const validateTitle = (title) => {
   if (!title || title.trim() === "") {
-    return { message: "Title is required", status: HTTP_STATUS.BAD_REQUEST };
+    return {
+      message: MSG.TASK_TITLE_REQUIRED,
+      status: STATUS.BAD_REQUEST,
+    };
   }
 
   if (title.length > config.TASK_TITLE_MAX_LENGTH) {
     return {
-      message: `Title must be less than ${config.TASK_TITLE_MAX_LENGTH} characters`,
-      status: HTTP_STATUS.BAD_REQUEST,
+      message: MSG.TASK_TITLE_LENGTH,
+      status: STATUS.BAD_REQUEST,
     };
   }
 
@@ -18,14 +21,10 @@ const validateTitle = (title) => {
 };
 
 const validateDescription = (description) => {
-  if (!description || description.trim() === "") {
-    return null;
-  }
-
-  if (description.length > config.TASK_DESCRIPTION_MAX_LENGTH) {
+  if (description && description.length > config.TASK_DESCRIPTION_MAX_LENGTH) {
     return {
-      message: `Description must be less than ${config.TASK_DESCRIPTION_MAX_LENGTH} characters`,
-      status: HTTP_STATUS.BAD_REQUEST,
+      message: MSG.TASK_DESCRIPTION_LENGTH,
+      status: STATUS.BAD_REQUEST,
     };
   }
   return null;
@@ -39,28 +38,28 @@ const validatePriorityId = async (priorityId) => {
   const parsedPriorityId = parseInt(priorityId);
   if (isNaN(parsedPriorityId)) {
     return {
-      message: "Priority ID must be a valid number",
-      status: HTTP_STATUS.BAD_REQUEST,
+      message: MSG.TASK_PRIORITY_ID_INVALID,
+      status: STATUS.BAD_REQUEST,
     };
   }
 
   const priority = await Priority.getPriorityById(parsedPriorityId);
   if (!priority) {
-    return { message: "Invalid priority ID", status: HTTP_STATUS.BAD_REQUEST };
+    return {
+      message: MSG.TASK_PRIORITY_ID_INVALID,
+      status: STATUS.BAD_REQUEST,
+    };
   }
 
   return null;
 };
 
 const validateDueDate = (dueDate) => {
-  if (!dueDate) {
-    return null;
-  }
-
-  if (isNaN(new Date(dueDate))) {
+  const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+  if (!dateRegex.test(dueDate)) {
     return {
-      message: "Due date must be a valid date (YYYY-MM-DD)",
-      status: HTTP_STATUS.BAD_REQUEST,
+      message: MSG.TASK_DUE_DATE_INVALID,
+      status: STATUS.BAD_REQUEST,
     };
   }
 
@@ -82,8 +81,8 @@ const validateIsCompleted = (isCompleted) => {
     isCompleted !== "false"
   ) {
     return {
-      message: "is_completed must be a boolean value",
-      status: HTTP_STATUS.BAD_REQUEST,
+      message: MSG.IS_COMPLETED_INVALID,
+      status: STATUS.BAD_REQUEST,
     };
   }
 

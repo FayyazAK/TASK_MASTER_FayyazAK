@@ -39,6 +39,14 @@ module.exports = {
     ORDER BY t.due_date ASC, t.created_at DESC
   `,
 
+  GET_ALL_TASKS_WITH_STATUS: `
+    SELECT t.*
+    FROM tasks t
+    JOIN lists l ON t.list_id = l.list_id
+    WHERE l.user_id = ? AND t.is_completed = ?
+    ORDER BY t.due_date ASC, t.created_at DESC
+  `,
+
   GET_TASK_BY_ID: `
     SELECT t.* 
     FROM tasks t
