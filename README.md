@@ -23,7 +23,8 @@ Unlike standard to-do list applications, TaskMaster offers:
 - **Advanced logging** with daily log rotation for better debugging and monitoring
 - **Full HTTPS support** with custom SSL certificate configuration
 - **Rate limiting** to prevent API abuse and ensure system stability
-- 
+- **Separate development and production environments** with environment-specific configurations
+
 ## ✨ Features
 
 ### 👤 User Management
@@ -31,11 +32,14 @@ Unlike standard to-do list applications, TaskMaster offers:
 - User profiles with customizable details
 - Role-based authorization (admin/regular users)
 - Password hashing with bcrypt for top-level security
+- Profile update functionality for users
 
 ### 📋 List Management
 - Create and organize multiple lists per user
 - Detailed list information with timestamps
 - Bulk operations for efficient list management
+- List statistics showing total tasks and pending tasks
+- Automatic timestamp updates when tasks are modified
 
 ### ✅ Task Management
 - Create, update, and organize tasks within lists
@@ -43,27 +47,40 @@ Unlike standard to-do list applications, TaskMaster offers:
 - Task due dates with status tracking
 - Task filtering and search capabilities
 - Mark tasks as complete/incomplete
+- Task modification with automated list update timestamps
+- Due date filtering for overdue and today's tasks
 
-### 🔒 Security
-- JWT-based authentication
-- HTTPS support
-- Rate limiting to prevent abuse
-- Input validation and sanitization
-- Helmet security headers
+### 🛡️ Security
+- JWT-based authentication with secure cookie options
+- HTTPS support with automatic HTTP to HTTPS redirection
+- Rate limiting to prevent abuse and brute force attacks
+- Input validation and sanitization against injection attacks
+- Helmet security headers to protect against common vulnerabilities
+- CORS protection with configurable allowed origins, methods, and headers
 
 ### 📊 Performance
 - Connection pooling for database optimization
 - Efficient SQL queries with proper indexing
 - Clustering support via PM2
+- Optimized database schema with appropriate relationships
+- Transaction support for data integrity
+
+### 📝 Logging
+- Comprehensive logging with Winston
+- Daily log rotation to prevent log file bloat
+- Different log levels for development and production
+- Separate error and combined logs
+- Console logging with colorized output
 
 ## 🛠️ Technical Stack
 
-- **Backend**: Node.js, Express.js
-- **Database**: MySQL
+- **Backend**: Node.js, Express.js 5.x
+- **Database**: MySQL 8+
 - **Authentication**: JWT (JSON Web Tokens)
 - **Process Manager**: PM2
-- **Security**: Helmet, bcrypt
+- **Security**: Helmet, bcrypt, rate-limiting
 - **Logging**: Winston with daily rotation
+- **Development**: Nodemon for hot-reloading
 
 ## 🚀 Getting Started
 
@@ -95,7 +112,7 @@ Unlike standard to-do list applications, TaskMaster offers:
 
 5. Start the server:
    ```bash
-   # Development mode
+   # Development mode with hot reloading
    npm start
 
    # OR using PM2
@@ -110,10 +127,13 @@ Unlike standard to-do list applications, TaskMaster offers:
 - `GET /api/auth/current-user` - Get current user info
 - `POST /api/auth/logout` - Logout user
 
+### User Management
+- `PUT /api/user/update-profile` - Update user profile
+
 ### Lists
-- `GET /api/lists` - Get all lists for user
+- `GET /api/lists` - Get all lists for user (query param: include_tasks)
 - `POST /api/lists` - Create a new list
-- `GET /api/lists/:list_id` - Get a specific list
+- `GET /api/lists/:list_id` - Get a specific list (query param: include_tasks)
 - `PUT /api/lists/:list_id` - Update a list
 - `DELETE /api/lists/:list_id` - Delete a list
 - `DELETE /api/lists/:list_id/clear` - Remove all tasks from a list
@@ -121,7 +141,7 @@ Unlike standard to-do list applications, TaskMaster offers:
 - `DELETE /api/lists/clear` - Clear all tasks from all lists
 
 ### Tasks
-- `GET /api/tasks` - Get all tasks for user
+- `GET /api/tasks` - Get all tasks for user (query param: completed)
 - `POST /api/tasks` - Create a new task
 - `GET /api/tasks/:task_id` - Get a specific task
 - `PUT /api/tasks/:task_id` - Update a task
@@ -139,6 +159,9 @@ Unlike standard to-do list applications, TaskMaster offers:
 - `POST /api/admin/users` - Create a new user
 - `PUT /api/admin/users/:id` - Update a user
 - `DELETE /api/admin/users/:id` - Delete a user
+- `POST /api/admin/priorities` - Create a new priority
+- `PUT /api/admin/priorities/:id` - Update a priority
+- `DELETE /api/admin/priorities/:id` - Delete a priority
 
 ## 📦 Production Deployment
 
@@ -161,7 +184,7 @@ npm run pm2:status
 ## 🧪 Development
 
 ```bash
-# Restart server on changes
+# Restart server on changes using Nodemon
 npm start
 
 # Generate SSL certificates
@@ -175,6 +198,7 @@ npm run ssl:generate
 - Enable HTTPS in production
 - Configure proper CORS settings for your frontend
 - Set appropriate rate limits based on your application needs
+- Regularly update dependencies to mitigate security vulnerabilities
 
 ## 📄 License
 
@@ -196,4 +220,4 @@ For questions or support, please open an issue in the GitHub repository.
 
 ---
 
-Made with ❤️ by [Fayyaz AK]
+Made with ❤️ by Fayyaz AK
