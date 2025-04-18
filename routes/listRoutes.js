@@ -10,18 +10,15 @@ const {
   cleanUpList,
   cleanUpAllLists,
 } = require("../controllers/listController");
-const { authenticate } = require("../middleware/auth");
 
-// Static routes (no parameters)
-router.post("/", authenticate, createList);
-router.get("/", authenticate, getUserLists);
-router.delete("/", authenticate, deleteAllLists);
-router.delete("/clear", authenticate, cleanUpAllLists);
+router.post("/", createList);
+router.get("/", getUserLists);
+router.delete("/", deleteAllLists);
+router.delete("/clear", cleanUpAllLists);
 
-// Parameterized routes
-router.get("/:list_id", authenticate, getListById);
-router.put("/:list_id", authenticate, updateList);
-router.delete("/:list_id", authenticate, deleteList);
-router.delete("/:list_id/clear", authenticate, cleanUpList);
+router.get("/:list_id", getListById);
+router.put("/:list_id", updateList);
+router.delete("/:list_id", deleteList);
+router.delete("/:list_id/clear", cleanUpList);
 
 module.exports = router;

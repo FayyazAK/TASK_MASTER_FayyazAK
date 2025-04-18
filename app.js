@@ -7,7 +7,9 @@ const corsConfig = require("./config/cors");
 const responseHandler = require("./middleware/responseHandler");
 const errorHandler = require("./middleware/errorHandler");
 const rateLimiter = require("./middleware/rateLimiter");
-const HTTP_STATUS = require("./utils/statusCodes");
+const STATUS = require("./utils/statusCodes");
+const MSG = require("./utils/messages");
+const helmet = require("helmet");
 const routes = require("./routes");
 const logger = require("./utils/logger");
 
@@ -15,6 +17,9 @@ const app = express();
 
 // CORS Configuration
 app.use(cors(corsConfig));
+
+// Helmet Configuration
+app.use(helmet());
 
 // Logging middleware
 app.use(morgan("combined", { stream: logger.stream }));
@@ -46,16 +51,13 @@ app.use("/api", routes);
 
 app.get("/", (req, res) => {
   logger.info("Root endpoint accessed");
-  return res.success({ message: "Hello from server!" });
+  return res.success(null, MSG.SERVER_RUNNING, STATUS.OK);
 });
 
 // 404 page handler
 app.use((req, res) => {
   logger.warn(`404 Not Found: ${req.method} ${req.url}`);
-  return res.error(
-    "Not Found - The requested resource does not exist",
-    HTTP_STATUS.NOT_FOUND
-  );
+  return res.error(MSG.NOT_FOUND, STATUS.NOT_FOUND);
 });
 
 // Error handler Middleware

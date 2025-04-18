@@ -5,15 +5,14 @@ const {
   getPriorityById,
   getPriorityByLevel,
 } = require("../controllers/priorityController");
-const { authenticate } = require("../middleware/auth");
 
 // Get all priorities
-router.get("/", authenticate, getAllPriorities);
+router.get("/", getAllPriorities);
 
 // Get priority by ID
-router.get("/id/:priority_id", authenticate, getPriorityById);
+router.get("/id/:priority_id", getPriorityById);
 
 // Get priority by level
-router.get("/level/:level", authenticate, getPriorityByLevel);
+router.get("/level/:level", getPriorityByLevel);
 
 module.exports = router;

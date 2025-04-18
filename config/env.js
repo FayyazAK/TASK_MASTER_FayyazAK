@@ -58,4 +58,10 @@ module.exports = {
     cert: process.env.SSL_CERT_PATH || "../ssl/cert.pem",
     port: process.env.SSL_PORT || 443,
   },
+
+  //RATE LIMITING
+  RATE_LIMIT: {
+    WINDOW_MS: Number(process.env.RATE_LIMIT_WINDOW_MS) || 15 * 60 * 1000, // 15 minutes
+    MAX: Number(process.env.RATE_LIMIT_MAX) || 100, // limit each IP to 100 requests per windowMs
+  },
 };
