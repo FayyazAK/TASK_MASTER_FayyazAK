@@ -2,7 +2,7 @@ const db = require("../config/database");
 const config = require("../config/env");
 const { hashPassword } = require("../utils/userUtils");
 const USER = require("../queries/userQueries");
-
+const { cacheHelpers, keyGenerators } = require("../config/redis");
 class User {
   static async createTable() {
     try {
@@ -38,11 +38,26 @@ class User {
       email,
       password,
     ]);
+
+    // Invalidate users cache
+    await cacheHelpers.del(keyGenerators.users());
+
     return result.insertId;
   }
 
   static async find() {
+    // Try to get from cache first
+    const cacheKey = keyGenerators.users();
+    const cachedUsers = await cacheHelpers.get(cacheKey);
+
+    if (cachedUsers) {
+      return cachedUsers;
+    }
     const [rows] = await db.execute(USER.FIND_ALL_USERS);
+
+    // Store in cache for future requests
+    await cacheHelpers.set(cacheKey, rows);
+
     return rows;
   }
 
@@ -57,7 +72,19 @@ class User {
   }
 
   static async findById(user_id) {
+    // Try to get from cache first
+    const cacheKey = keyGenerators.user(user_id);
+    const cachedUser = await cacheHelpers.get(cacheKey);
+
+    if (cachedUser) {
+      return cachedUser;
+    }
+
     const [rows] = await db.execute(USER.FIND_BY_ID, [user_id]);
+
+    // Store in cache for future requests
+    await cacheHelpers.set(cacheKey, rows[0]);
+
     return rows[0];
   }
 
@@ -73,10 +100,19 @@ class User {
       password,
       user_id,
     ]);
+
+    // Invalidate users cache
+    await cacheHelpers.del(keyGenerators.users());
+    await cacheHelpers.del(keyGenerators.user(user_id));
   }
 
   static async delete(user_id) {
     await db.execute(USER.DELETE_USER, [user_id]);
+
+    // Invalidate users cache
+    await cacheHelpers.del(keyGenerators.users());
+    await cacheHelpers.del(keyGenerators.user(user_id));
+    await cacheHelpers.deleteUserCache(user_id);
   }
 }
 

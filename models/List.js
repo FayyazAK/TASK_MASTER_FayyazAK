@@ -1,7 +1,7 @@
 const db = require("../config/database");
 const LIST = require("../queries/listQueries");
 const Task = require("./Task");
-
+const { cacheHelpers, keyGenerators } = require("../config/redis");
 class List {
   static async createTable() {
     try {
@@ -21,6 +21,9 @@ class List {
         description,
       ]);
 
+      // Invalidate user's list cache
+      await cacheHelpers.del(keyGenerators.userLists(user_id));
+
       return result.insertId;
     } catch (error) {
       console.error("Error creating list:", error);
@@ -31,10 +34,20 @@ class List {
   //Get all lists for a user
   static async getLists(user_id) {
     try {
+      // Try to get from cache first
+      const cacheKey = keyGenerators.userLists(user_id);
+      const cachedLists = await cacheHelpers.get(cacheKey);
+
+      if (cachedLists) {
+        return cachedLists;
+      }
       const [results] = await db.execute(LIST.GET_LISTS_BY_USER_ID, [user_id]);
       if (!results || results.length === 0) {
         return [];
       }
+      // Store in cache for future requests
+      await cacheHelpers.set(cacheKey, results);
+
       return results;
     } catch (error) {
       console.error("Error getting lists by user ID:", error);
@@ -45,14 +58,26 @@ class List {
   //Get all lists for a user with tasks
   static async getListsWithTasks(user_id) {
     try {
+      // Try to get from cache first
+      const cacheKey = keyGenerators.userListsWithTasks(user_id);
+      const cachedLists = await cacheHelpers.get(cacheKey);
+
+      if (cachedLists) {
+        return cachedLists;
+      }
+
       const [results] = await db.execute(LIST.GET_LISTS_BY_USER_ID, [user_id]);
       if (!results || results.length === 0) {
         return [];
       }
-      const lists = results.map(async (list) => {
-        const tasks = await Task.getTasksByListId(list.list_id, user_id);
-        return { ...list, tasks };
-      });
+      const lists = await Promise.all(
+        results.map(async (list) => {
+          const tasks = await Task.getTasksByListId(list.list_id, user_id);
+          return { ...list, tasks };
+        })
+      );
+      // Store in cache for future requests
+      await cacheHelpers.set(cacheKey, lists);
       return lists;
     } catch (error) {
       console.error("Error getting lists by user ID:", error);
@@ -63,10 +88,22 @@ class List {
   //Get a list by ID and user_id
   static async getListById(list_id, user_id) {
     try {
+      // Try to get from cache first
+      const cacheKey = keyGenerators.list(list_id, user_id);
+      const cachedList = await cacheHelpers.get(cacheKey);
+
+      if (cachedList) {
+        return cachedList;
+      }
       const [results] = await db.execute(LIST.GET_LIST_BY_ID, [
         list_id,
         user_id,
       ]);
+      if (!results || results.length === 0) {
+        return null;
+      }
+      // Store in cache for future requests
+      await cacheHelpers.set(cacheKey, results[0]);
       return results[0];
     } catch (error) {
       console.error("Error getting list by ID:", error);
@@ -77,6 +114,13 @@ class List {
   //Get a list by ID and user_id with tasks
   static async getListByIdWithTasks(list_id, user_id) {
     try {
+      // Try to get from cache first
+      const cacheKey = keyGenerators.listWithTasks(list_id, user_id);
+      const cachedList = await cacheHelpers.get(cacheKey);
+
+      if (cachedList) {
+        return cachedList;
+      }
       const [results] = await db.execute(LIST.GET_LIST_BY_ID, [
         list_id,
         user_id,
@@ -90,7 +134,8 @@ class List {
       const tasks = await Task.getTasksByListId(listData.list_id, user_id);
       // Add tasks to the list
       listData.tasks = tasks;
-
+      // Store in cache for future requests
+      await cacheHelpers.set(cacheKey, listData);
       return listData;
     } catch (error) {
       console.error("Error getting list by ID:", error);
@@ -133,7 +178,13 @@ class List {
         // List doesn't exist or doesn't belong to the user
         return null;
       }
-
+      // Invalidate all affected caches
+      await Promise.all([
+        cacheHelpers.del(keyGenerators.list(list_id, user_id)),
+        cacheHelpers.del(keyGenerators.listWithTasks(list_id, user_id)),
+        cacheHelpers.del(keyGenerators.userLists(user_id)),
+        cacheHelpers.del(keyGenerators.userListsWithTasks(user_id)),
+      ]);
       // Fetch and return the updated list
       return await this.getListById(list_id, user_id);
     } catch (error) {
@@ -146,6 +197,8 @@ class List {
   static async deleteList(list_id, user_id) {
     try {
       const [result] = await db.execute(LIST.DELETE_LIST, [list_id, user_id]);
+      // Invalidate all affected caches
+      await cacheHelpers.deleteUserCache(user_id);
       return result.affectedRows > 0;
     } catch (error) {
       console.error("Error deleting list:", error);
@@ -157,6 +210,10 @@ class List {
   static async deleteAllLists(user_id) {
     try {
       const [result] = await db.execute(LIST.DELETE_ALL_LISTS, [user_id]);
+
+      // Invalidate all user's list and task caches
+      await cacheHelpers.deleteUserCache(user_id);
+
       return result.affectedRows;
     } catch (error) {
       console.error("Error deleting all lists:", error);
@@ -168,6 +225,8 @@ class List {
   static async cleanUpList(list_id) {
     try {
       const [result] = await db.execute(LIST.CLEAN_UP_LIST, [list_id]);
+      // Invalidate all caches for this user
+      await cacheHelpers.deleteUserCache(user_id);
       return result.affectedRows;
     } catch (error) {
       console.error("Error cleaning up list:", error);
@@ -179,6 +238,8 @@ class List {
   static async cleanUpAllLists(user_id) {
     try {
       const [result] = await db.execute(LIST.CLEAN_UP_ALL_LISTS, [user_id]);
+      // Invalidate all caches for this user
+      await cacheHelpers.deleteUserCache(user_id);
       return result.affectedRows;
     } catch (error) {
       console.error("Error cleaning up all lists:", error);
@@ -192,7 +253,13 @@ class List {
         list_id,
         user_id,
       ]);
-      console.log("result", result);
+      // Invalidate all affected caches
+      await Promise.all([
+        cacheHelpers.del(keyGenerators.list(list_id, user_id)),
+        cacheHelpers.del(keyGenerators.listWithTasks(list_id, user_id)),
+        cacheHelpers.del(keyGenerators.userLists(user_id)),
+        cacheHelpers.del(keyGenerators.userListsWithTasks(user_id)),
+      ]);
       return result.affectedRows > 0;
     } catch (error) {
       console.error("Error updating list timestamp: ", error);
