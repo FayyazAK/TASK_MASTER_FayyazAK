@@ -84,4 +84,6 @@ module.exports = {
   PRIORITY_UPDATE_FIELDS_REQUIRED:
     "At least one field (name or level) is required",
   PRIORITY_LEVEL_EXISTS: "Priority level already exists",
+  PRIORITY_DELETE_FAILED:
+    "Priority cannot be deleted. It is a default priority.",
 };

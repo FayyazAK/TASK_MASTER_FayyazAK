@@ -22,7 +22,7 @@ router.delete("/users/:id", deleteUser);
 
 // Priority routes for admin
 router.post("/priorities", createPriority);
-router.put("/priorities/:id", updatePriority);
-router.delete("/priorities/:id", deletePriority);
+router.put("/priorities/:priority_id", updatePriority);
+router.delete("/priorities/:priority_id", deletePriority);
 
 module.exports = router;
