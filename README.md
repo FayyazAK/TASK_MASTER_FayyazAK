@@ -4,6 +4,7 @@
 ![Node.js](https://img.shields.io/badge/Node.js-18+-green.svg)
 ![Express](https://img.shields.io/badge/Express-5.x-lightgrey.svg)
 ![MySQL](https://img.shields.io/badge/MySQL-8.0+-orange.svg)
+![Redis](https://img.shields.io/badge/Redis-6.0+-red.svg)
 
 TaskMaster is a powerful, feature-rich RESTful API for managing to-do lists and tasks with robust user authentication, role-based permissions, and comprehensive task organization capabilities.
 
@@ -14,6 +15,7 @@ Unlike standard to-do list applications, TaskMaster offers:
 - **Enterprise-grade security** with JWT authentication, bcrypt password hashing, and role-based access control
 - **Multi-level organization** with lists and tasks hierarchy for better organization
 - **Priority management system** with customizable priority levels
+- **Advanced caching** with Redis for optimized performance and scalability
 - **Admin dashboard capabilities** for team management and oversight
 - **Comprehensive API** that can support multiple frontend clients (web, mobile, desktop)
 - **Performance optimizations** with database connection pooling and proper indexing
@@ -28,6 +30,7 @@ Unlike standard to-do list applications, TaskMaster offers:
 ## ✨ Features
 
 ### 👤 User Management
+
 - Secure user registration and authentication with JWT
 - User profiles with customizable details
 - Role-based authorization (admin/regular users)
@@ -35,6 +38,7 @@ Unlike standard to-do list applications, TaskMaster offers:
 - Profile update functionality for users
 
 ### 📋 List Management
+
 - Create and organize multiple lists per user
 - Detailed list information with timestamps
 - Bulk operations for efficient list management
@@ -42,6 +46,7 @@ Unlike standard to-do list applications, TaskMaster offers:
 - Automatic timestamp updates when tasks are modified
 
 ### ✅ Task Management
+
 - Create, update, and organize tasks within lists
 - Multiple priority levels (Low, Medium, High, Urgent)
 - Task due dates with status tracking
@@ -51,6 +56,7 @@ Unlike standard to-do list applications, TaskMaster offers:
 - Due date filtering for overdue and today's tasks
 
 ### 🛡️ Security
+
 - JWT-based authentication with secure cookie options
 - HTTPS support with automatic HTTP to HTTPS redirection
 - Rate limiting to prevent abuse and brute force attacks
@@ -59,6 +65,8 @@ Unlike standard to-do list applications, TaskMaster offers:
 - CORS protection with configurable allowed origins, methods, and headers
 
 ### 📊 Performance
+
+- **Redis caching layer** with intelligent invalidation strategies
 - Connection pooling for database optimization
 - Efficient SQL queries with proper indexing
 - Clustering support via PM2
@@ -66,16 +74,47 @@ Unlike standard to-do list applications, TaskMaster offers:
 - Transaction support for data integrity
 
 ### 📝 Logging
+
 - Comprehensive logging with Winston
 - Daily log rotation to prevent log file bloat
 - Different log levels for development and production
 - Separate error and combined logs
 - Console logging with colorized output
 
+## 🧠 Caching Strategy
+
+TaskMaster implements a sophisticated Redis caching strategy:
+
+### Cache Implementation
+
+- **Cache-Aside Pattern**: Check cache first, fall back to database
+- **Time-Based Expiration**: Configurable TTL for all cached items
+- **Strategic Invalidation**: Smart cache clearing when data is modified
+- **Hierarchical Key Structure**: Organized key naming scheme for efficient invalidation
+- **Namespace Prefixing**: Prevents key collisions with other applications
+
+### Key Generators
+
+Structured naming convention for cache keys:
+
+- `users:${userId}` - Single user data
+- `users:${userId}:lists` - All lists for a user
+- `users:${userId}:lists:${listId}` - Specific list data
+- `users:${userId}:tasks` - All tasks for a user
+- `priorities` - All priority levels
+
+### Cache Operations
+
+- Automatic cache invalidation on writes
+- Pattern-based invalidation for related entities
+- Error-resistant caching with graceful fallbacks
+- Optional cache clearing on application startup
+
 ## 🛠️ Technical Stack
 
 - **Backend**: Node.js, Express.js 5.x
 - **Database**: MySQL 8+
+- **Caching**: Redis 6+
 - **Authentication**: JWT (JSON Web Tokens)
 - **Process Manager**: PM2
 - **Security**: Helmet, bcrypt, rate-limiting
@@ -88,17 +127,20 @@ Unlike standard to-do list applications, TaskMaster offers:
 
 - Node.js (v18 or higher)
 - MySQL (v8.0 or higher)
+- Redis (v6.0 or higher)
 - npm or yarn
 
 ### Installation
 
 1. Clone the repository:
+
    ```bash
    git clone https://github.com/YourUsername/TaskMaster.git
    cd TaskMaster
    ```
 
 2. Install dependencies:
+
    ```bash
    npm install
    ```
@@ -106,11 +148,13 @@ Unlike standard to-do list applications, TaskMaster offers:
 3. Create a `.env` file in the root directory with the following variables (use `.env-example` as a template)
 
 4. Generate SSL certificates (if using HTTPS):
+
    ```bash
    npm run ssl:generate
    ```
 
 5. Start the server:
+
    ```bash
    # Development mode with hot reloading
    npm start
@@ -122,15 +166,18 @@ Unlike standard to-do list applications, TaskMaster offers:
 ## 🌐 API Endpoints
 
 ### Authentication
+
 - `POST /api/auth/signup` - Register a new user
 - `POST /api/auth/login` - Login user
 - `GET /api/auth/current-user` - Get current user info
 - `POST /api/auth/logout` - Logout user
 
 ### User Management
+
 - `PUT /api/user/update-profile` - Update user profile
 
 ### Lists
+
 - `GET /api/lists` - Get all lists for user (query param: include_tasks)
 - `POST /api/lists` - Create a new list
 - `GET /api/lists/:list_id` - Get a specific list (query param: include_tasks)
@@ -141,6 +188,7 @@ Unlike standard to-do list applications, TaskMaster offers:
 - `DELETE /api/lists/clear` - Clear all tasks from all lists
 
 ### Tasks
+
 - `GET /api/tasks` - Get all tasks for user (query param: completed)
 - `POST /api/tasks` - Create a new task
 - `GET /api/tasks/:task_id` - Get a specific task
@@ -149,11 +197,13 @@ Unlike standard to-do list applications, TaskMaster offers:
 - `PUT /api/tasks/:task_id/status` - Update task completion status
 
 ### Priorities
+
 - `GET /api/priorities` - Get all priority levels
 - `GET /api/priorities/id/:priority_id` - Get priority by ID
 - `GET /api/priorities/level/:level` - Get priority by level
 
 ### Admin Routes (admin role required)
+
 - `GET /api/admin/users` - Get all users
 - `GET /api/admin/users/:id` - Get user by ID
 - `POST /api/admin/users` - Create a new user
@@ -199,6 +249,22 @@ npm run ssl:generate
 - Configure proper CORS settings for your frontend
 - Set appropriate rate limits based on your application needs
 - Regularly update dependencies to mitigate security vulnerabilities
+
+## 🚀 Performance Optimization
+
+- Redis caching for frequently accessed data
+- Database connection pooling
+- Proper SQL indexing
+- PM2 clustering for load distribution
+- Rate limiting to prevent overload
+
+## 🧩 Future Improvements
+
+- Add unit and integration testing
+- Implement Swagger/OpenAPI documentation
+- Consider TypeScript for type safety
+- Add Docker configuration for easier deployment
+- Implement Continuous Integration/Deployment pipelines
 
 ## 📄 License
 
