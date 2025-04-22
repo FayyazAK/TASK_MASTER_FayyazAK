@@ -61,7 +61,19 @@ module.exports = {
 
   //RATE LIMITING
   RATE_LIMIT: {
-    WINDOW_MS: Number(process.env.RATE_LIMIT_WINDOW_MS) || 15 * 60 * 1000, // 15 minutes
-    MAX: Number(process.env.RATE_LIMIT_MAX) || 100, // limit each IP to 100 requests per windowMs
+    WINDOW_MS: Number(process.env.RATE_LIMIT_WINDOW_MS) || 15 * 60 * 1000,
+    MAX: Number(process.env.RATE_LIMIT_MAX) || 100,
   },
+
+  //REDIS CONFIG
+  REDIS: {
+    HOST: process.env.REDIS_HOST || "localhost",
+    PORT: process.env.REDIS_PORT || 6379,
+    TTL: process.env.REDIS_TTL || 3600,
+    PASSWORD: process.env.REDIS_PASSWORD || "",
+    DB: process.env.REDIS_DB || 0,
+  },
+
+  // CACHE CONFIG
+  CLEAR_CACHE_ON_START: process.env.CLEAR_CACHE_ON_START === "true",
 };

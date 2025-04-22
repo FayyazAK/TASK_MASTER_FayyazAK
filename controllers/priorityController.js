@@ -179,6 +179,9 @@ const deletePriority = async (req, res, next) => {
       return res.error(MSG.INVALID_PRIORITY_ID, STATUS.BAD_REQUEST);
     }
 
+    if (parsedPriorityId === 1) {
+      return res.error(MSG.PRIORITY_DELETE_FAILED, STATUS.BAD_REQUEST);
+    }
     // Check if priority exists
     const priority = await Priority.getPriorityById(parsedPriorityId);
     if (!priority) {
